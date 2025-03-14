@@ -8,7 +8,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-app.get("/checking-meetzy", (req, res) => {
+app.get("/meetzy", (req, res) => {
   res.send({ key: "I am working for meetzy" });
 });
 
