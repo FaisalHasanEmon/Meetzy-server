@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: socket-server
+    env: node
+    plan: free
+    branch: main
+    buildCommand: 'npm install'
+    startCommand: 'node index.js'
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        value: mongodb+srv://Meetzy:hxYhA9Rb4sd42YbD@cluster0.rxvwb.mongodb.net/?retryWrites=true&w=majority
