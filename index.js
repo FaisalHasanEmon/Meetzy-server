@@ -44,27 +44,10 @@ const io = new Server(server, {
   transports: ['websocket', 'polling']
 });
 
-// Authentication Middleware
 
-// io.use((socket, next) => {
-//   if (socket.handshake.auth && socket.handshake.auth.token) {
-//     try {
-//       const decoded = jwt.verify(socket.handshake.auth.token, process.env.JWT_SECRET);
-//       socket.userEmail = decoded.email;
-//       next();
-//     } catch (err) {
-//       console.error("Authentication error:", err);
-//       next(new Error("Authentication failed: Invalid token"));
-//     }
-//   } else {
-//     next(new Error("Authentication failed: No token provided"));
-//   }
-// });
-
-// MongoDB and Socket.io Connection
 async function run() {
   try {
-    // await client.connect();
+   
     const db = client.db("MeetzyDB");
     console.log("Successfully connected to MongoDB!");
 
@@ -88,7 +71,7 @@ async function run() {
       }
     });
 
-    // Socket.io Event Handlers
+    
     io.on("connection", async (socket) => {
       console.log("User connected:", socket.id, "Email:", socket.userEmail);
 
