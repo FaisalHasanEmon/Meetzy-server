@@ -1,68 +1,3 @@
-// const express = require("express");
-// const cors = require("cors");
-// const app = express();
-// require("dotenv").config();
-// const port = process.env.PORT || 5000;
-
-// // Middleware
-// app.use(cors());
-// app.use(express.json());
-
-
-
-
-// const { MongoClient, ServerApiVersion } = require('mongodb');
-
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.rxvwb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-
-
-
-// const client = new MongoClient(uri, {
-//   serverApi: {
-//     version: ServerApiVersion.v1,
-//     strict: true,
-//     deprecationErrors: true,
-//   }
-// });
-
-// async function run() {
-//   try {
-
-//     const userCollection = client.db("MeetzyUser").collection("users");
-
-//     app.post('/users', async (req, res) => {
-//       const user = req.body;
-//       const query = { email: user.email };
-//       const existingUser = await userCollection.findOne(query);
-//       if (existingUser) {
-//         return res.send({ message: 'User already exists', insertedId: null });
-//       }
-//       const result = await userCollection.insertOne(user);
-//       res.send(result);
-//     });
-
-//     // Connect the client to the server	(optional starting in v4.7)
-//     // await client.connect();
-//     // Send a ping to confirm a successful connection
-//     // await client.db("admin").command({ ping: 1 });
-//     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
-//   } finally {
-//     // Ensures that the client will close when you finish/error
-//     // await client.close();
-//   }
-// }
-// run().catch(console.dir);
-
-
-
-// app.get('/', (req, res) => {
-//   res.send('I am working for meetzy')
-// })
-
-// app.listen(port, () => {
-//   console.log(`Server is running on port ${port}`);
-// });
-
 
 require('dotenv').config();
 const express = require("express");
@@ -75,7 +10,7 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 const app = express();
 const server = http.createServer(app);
 
-// Middleware
+
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -86,7 +21,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// MongoDB Connection
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.rxvwb.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   serverApi: {
@@ -96,7 +31,7 @@ const client = new MongoClient(uri, {
   }
 });
 
-// Socket.io Setup
+
 const io = new Server(server, {
   cors: {
     origin: [
@@ -110,6 +45,7 @@ const io = new Server(server, {
 });
 
 // Authentication Middleware
+
 // io.use((socket, next) => {
 //   if (socket.handshake.auth && socket.handshake.auth.token) {
 //     try {
@@ -135,7 +71,7 @@ async function run() {
     const userCollection = db.collection("users");
     const chatCollection = db.collection("chats");
 
-    // REST API Endpoints
+    
     app.post('/users', async (req, res) => {
       try {
         const user = req.body;
@@ -232,13 +168,12 @@ async function run() {
     });
 
   } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+   
   }
 }
 run().catch(console.dir);
 
-// Start Server
+
 const port = process.env.PORT || 5000;
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
