@@ -9,7 +9,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const server = http.createServer(app);
 
-// Middleware
+
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -21,12 +21,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Root Route
-app.get("/", (req, res) => {
-  res.send("Meetzy Backend Server is running ✅");
-});
-
-// MongoDB Connection
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.rxvwb.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   serverApi: {
@@ -36,7 +30,7 @@ const client = new MongoClient(uri, {
   }
 });
 
-// Socket.io Setup
+
 const io = new Server(server, {
   cors: {
     origin: [
@@ -50,6 +44,23 @@ const io = new Server(server, {
   transports: ['websocket', 'polling']
 });
 
+// Authentication Middleware
+
+// io.use((socket, next) => {
+//   if (socket.handshake.auth && socket.handshake.auth.token) {
+//     try {
+//       const decoded = jwt.verify(socket.handshake.auth.token, process.env.JWT_SECRET);
+//       socket.userEmail = decoded.email;
+//       next();
+//     } catch (err) {
+//       console.error("Authentication error:", err);
+//       next(new Error("Authentication failed: Invalid token"));
+//     }
+//   } else {
+//     next(new Error("Authentication failed: No token provided"));
+//   }
+// });
+
 // MongoDB and Socket.io Connection
 async function run() {
   try {
@@ -60,7 +71,7 @@ async function run() {
     const userCollection = db.collection("users");
     const chatCollection = db.collection("chats");
 
-    // POST /users - Create new user
+    
     app.post('/users', async (req, res) => {
       try {
         const user = req.body;
@@ -184,11 +195,13 @@ async function run() {
 
   } catch (error) {
     console.error("Server error during startup:", error);
+  } finally {
+   
   }
 }
 run().catch(console.dir);
 
-// Start Server
+
 const port = process.env.PORT || 5000;
 server.listen(port, () => {
   console.log(`🚀 Server is running on port ${port}`);
