@@ -4,22 +4,22 @@ const cors = require("cors");
 const { Server } = require("socket.io");
 const http = require("http");
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb'); // <-- added ObjectId
 
 const app = express();
 const server = http.createServer(app);
 
-
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://meetzyap.web.app",
-    "https://meetzyap.firebaseapp.com"
+    "https://meetzyap.web.app"
   ],
   methods: ["GET", "POST"],
   credentials: true
 }));
 app.use(express.json());
+
+
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.rxvwb.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -30,12 +30,10 @@ const client = new MongoClient(uri, {
   }
 });
 
-
 const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:5173",
-      "https://meetzyap.web.app",
       "https://meetzyap.firebaseapp.com"
     ],
     methods: ["GET", "POST"],
@@ -44,34 +42,15 @@ const io = new Server(server, {
   transports: ['websocket', 'polling']
 });
 
-// Authentication Middleware
-
-// io.use((socket, next) => {
-//   if (socket.handshake.auth && socket.handshake.auth.token) {
-//     try {
-//       const decoded = jwt.verify(socket.handshake.auth.token, process.env.JWT_SECRET);
-//       socket.userEmail = decoded.email;
-//       next();
-//     } catch (err) {
-//       console.error("Authentication error:", err);
-//       next(new Error("Authentication failed: Invalid token"));
-//     }
-//   } else {
-//     next(new Error("Authentication failed: No token provided"));
-//   }
-// });
-
-// MongoDB and Socket.io Connection
 async function run() {
   try {
-    await client.connect();
+    await client.connect(); // <-- added this
     const db = client.db("MeetzyDB");
-    console.log("✅ Successfully connected to MongoDB!");
+    console.log("Successfully connected to MongoDB!");
 
     const userCollection = db.collection("users");
     const chatCollection = db.collection("chats");
 
-    
     app.post('/users', async (req, res) => {
       try {
         const user = req.body;
@@ -88,7 +67,6 @@ async function run() {
       }
     });
 
-    // GET /users - Fetch all users
     app.get('/users', async (req, res) => {
       try {
         const users = await userCollection.find({}).toArray();
@@ -98,12 +76,11 @@ async function run() {
         res.status(500).json({ message: 'Internal server error', error: error.message });
       }
     });
+
     app.delete('/users/:id', async (req, res) => {
       const id = req.params.id;
-      console.log("Received delete request for id:", id);  // ➔ log id
       try {
         const result = await userCollection.deleteOne({ _id: new ObjectId(id) });
-        console.log("Delete result:", result); // ➔ log result
         if (result.deletedCount === 1) {
           res.status(200).send({ message: 'User deleted successfully' });
         } else {
@@ -114,24 +91,20 @@ async function run() {
         res.status(500).send({ message: 'Internal server error' });
       }
     });
-    
-    
 
-    // Socket.io Event Handlers
-    io.on("connection", (socket) => {
-      console.log("✅ User connected:", socket.id);
+    io.on("connection", async (socket) => {
+      console.log("User connected:", socket.id, "Email:", socket.userEmail);
 
       socket.on("join-room", async ({ roomId }) => {
         try {
           socket.join(roomId);
-          const email = socket.handshake.auth?.email || null;
-
+          const email = socket.userEmail;
           socket.emit('joined-room', { roomId, userId: socket.id, email });
 
           const roomSockets = await io.in(roomId).fetchSockets();
           const users = roomSockets.map(s => ({
             userId: s.id,
-            email: s.handshake.auth?.email || null
+            email: s.userEmail
           }));
 
           const otherUsers = users.filter(u => u.userId !== socket.id);
@@ -140,7 +113,6 @@ async function run() {
 
           const chatHistory = await chatCollection.find({ roomId }).sort({ timestamp: 1 }).toArray();
           socket.emit("chat-history", chatHistory);
-
         } catch (error) {
           console.error("Error joining room:", error);
           socket.emit("error", { message: "Failed to join room", error: error.message });
@@ -161,7 +133,7 @@ async function run() {
 
       socket.on("send-message", async ({ roomId, message }) => {
         try {
-          const sender = socket.handshake.auth?.email || "Anonymous";
+          const sender = socket.userEmail;
           const timestamp = new Date();
           const msg = { sender, message, timestamp, roomId };
           await chatCollection.insertOne(msg);
@@ -186,23 +158,24 @@ async function run() {
           for (const roomId of rooms) {
             socket.to(roomId).emit("user-disconnected", socket.id);
           }
-          console.log("❌ User disconnected:", socket.id);
+          console.log("User disconnected:", socket.id, "Email:", socket.userEmail);
         } catch (error) {
           console.error("Error on disconnect:", error);
         }
       });
     });
 
-  } catch (error) {
-    console.error("Server error during startup:", error);
-  } finally {
-   
+    app.get("/", (req, res) => {
+      res.send("Meetzy server is running!");
+    }); 
+
+    const port = process.env.PORT || 5000;
+    server.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+
+  } catch (err) {
+    console.error("Error connecting to MongoDB:", err);
   }
 }
 run().catch(console.dir);
-
-
-const port = process.env.PORT || 5000;
-server.listen(port, () => {
-  console.log(`🚀 Server is running on port ${port}`);
-});
